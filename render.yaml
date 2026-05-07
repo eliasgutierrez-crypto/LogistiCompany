@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: logisticompany-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run migrate
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        value: change-this-in-production-use-strong-key
+
+  - type: static
+    name: logisticompany-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://logisticompany.onrender.com/api

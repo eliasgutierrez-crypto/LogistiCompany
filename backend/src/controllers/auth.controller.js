@@ -1,5 +1,8 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 exports.login = async (req, res, next) => {
   try {
@@ -18,7 +21,8 @@ exports.login = async (req, res, next) => {
     }
 
     const safeUser = { id: user.id, username: user.username, role: user.role };
-    return res.json({ user: safeUser });
+    const token = jwt.sign(safeUser, JWT_SECRET, { expiresIn: '24h' });
+    return res.json({ user: safeUser, token });
   } catch (err) {
     next(err);
   }
@@ -27,11 +31,18 @@ exports.login = async (req, res, next) => {
 exports.register = async (req, res, next) => {
   try {
     const { username, password, role } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username and password are required' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 8);
     const insertQuery = 'INSERT INTO users (username, password, role, created_at) VALUES ($1, $2, $3, NOW()) RETURNING id, username, role';
-    const result = await pool.query(insertQuery, [username, hashedPassword, role]);
+    const result = await pool.query(insertQuery, [username, hashedPassword, role || 'customer']);
     const user = result.rows[0];
-    return res.status(201).json({ user });
+    
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
+    return res.status(201).json({ user, token });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ message: 'Username already exists' });
