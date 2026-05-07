@@ -1,0 +1,99 @@
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(100) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(32) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS customers (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  company_name VARCHAR(200) NOT NULL,
+  phone VARCHAR(60) NOT NULL,
+  email VARCHAR(120) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS vehicles (
+  id SERIAL PRIMARY KEY,
+  plate_number VARCHAR(50) NOT NULL,
+  model VARCHAR(120) NOT NULL,
+  capacity VARCHAR(80),
+  status VARCHAR(60) NOT NULL DEFAULT 'Active',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS drivers (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  license_number VARCHAR(100) NOT NULL,
+  phone VARCHAR(60) NOT NULL,
+  vehicle_id INTEGER REFERENCES vehicles(id),
+  status VARCHAR(60) NOT NULL DEFAULT 'Available',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS addresses (
+  id SERIAL PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+  street VARCHAR(255) NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  state VARCHAR(100) NOT NULL,
+  zip VARCHAR(20) NOT NULL,
+  country VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id SERIAL PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  address_id INTEGER REFERENCES addresses(id),
+  order_date TIMESTAMP NOT NULL DEFAULT NOW(),
+  status VARCHAR(60) NOT NULL DEFAULT 'Pending',
+  total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS shipment_status (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS shipments (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  driver_id INTEGER REFERENCES drivers(id),
+  vehicle_id INTEGER REFERENCES vehicles(id),
+  status_id INTEGER NOT NULL REFERENCES shipment_status(id),
+  pickup_date TIMESTAMP,
+  delivery_date TIMESTAMP,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS invoices (
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  amount_due NUMERIC(12, 2) NOT NULL,
+  due_date DATE NOT NULL,
+  status VARCHAR(60) NOT NULL DEFAULT 'Unpaid',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+  id SERIAL PRIMARY KEY,
+  invoice_id INTEGER NOT NULL REFERENCES invoices(id),
+  amount NUMERIC(12, 2) NOT NULL,
+  paid_date DATE NOT NULL,
+  method VARCHAR(80) NOT NULL,
+  status VARCHAR(60) NOT NULL DEFAULT 'Paid',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS tracking (
+  id SERIAL PRIMARY KEY,
+  shipment_id INTEGER NOT NULL REFERENCES shipments(id),
+  location VARCHAR(200) NOT NULL,
+  status VARCHAR(100) NOT NULL,
+  timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+);
