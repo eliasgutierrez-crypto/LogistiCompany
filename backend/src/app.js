@@ -32,6 +32,8 @@ app.get('/api', (req, res) => {
   res.json({ message: 'LogistiCompany API is running' });
 });
 
-app.use(errorMiddleware);
+app.get('/', (req, res) => {
+  res.json({ message: 'Welcome to LogistiCompany. API endpoints are under /api/' });
+});
 
 module.exports = app;
